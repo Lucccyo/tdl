@@ -1,14 +1,19 @@
 #!/bin/bash 
 
+invalid_command() {
+  echo "tdl: missing operand"
+  echo "Try 'tdl --help' for more information." 
+  exit 0 
+}
+
 project_dir="$HOME/.config/tdl/"
 
 if [[ "$#" -eq 0 ]]; then 
-  exit 0 
+  invalid_command
 fi
 if [[ "$1" =~ ^- ]]; then
   if [[ ! (($1 == "-c" || $1 == "-o" || $1 == "-r") && -n $2) && ! $1 == "-l" ]]; then
-    echo 'invalid command'
-    exit 0
+    invalid_command
   elif [[ $1 == '-l' ]]; then
     ls $project_dir | grep -v $project_dir
   else 
@@ -30,8 +35,7 @@ else
     exit 0
   fi
   if [[ ! (($2 == "-a" || $2 == "-g" || $2 == "-r") && -n $3) && ! $2 == "-l" ]]; then
-    echo 'invalid command'
-    exit 0
+    invalid_command
   elif [[ $2 == '-l' ]]; then
     grep -v '^\s*$\|^#' "$project_dir$1/paths.sh"
   else 
@@ -47,7 +51,6 @@ else
   	    '-t' ) echo "alacritty --working-directory $5 &" >> "$project_dir$1/paths.sh" ;;
 	  esac
 	fi
-
 	;;
       '-g' ) echo "on ghost les paths ... dans $1" ;;
       '-r' )
