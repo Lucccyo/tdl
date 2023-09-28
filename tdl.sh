@@ -12,10 +12,12 @@ if [[ "$#" -eq 0 ]]; then
   invalid_command
 fi
 if [[ "$1" =~ ^- ]]; then
-  if [[ ! (($1 == "-c" || $1 == "-o" || $1 == "-r") && -n $2) && ! $1 == "-l" ]]; then
+  if [[ ! (($1 == "-c" || $1 == "-o" || $1 == "-r") && -n $2) && ! $1 == "-l" && ! $1 == "--help" ]]; then
     invalid_command
   elif [[ $1 == '-l' ]]; then
     ls $project_dir | grep -v $project_dir
+  elif [[ $1 == "--help" ]]; then
+    man tdl
   else 
     case "$1" in
       '-c' ) 
