@@ -39,6 +39,7 @@ else
   if [[ ! (($2 == "-a" || $2 == "-g" || $2 == "-r") && -n $3) && ! $2 == "-l" ]]; then
     invalid_command
   elif [[ $2 == '-l' ]]; then
+    # montrer ceux qui sont ghost et ceux qui ne le sont pas 
     grep '^#\s' "$project_dir$1/paths.sh"
   else 
     case "$2" in
@@ -66,8 +67,7 @@ else
       	# 	si non, on l'ajoute
 	else
 	  sed -i "${l}s/^/#/" "$project_dir$1/paths.sh"
-	fi
-	echo "on ghost les paths ... dans $1" ;;
+	fi;;
       '-r' )
 	if [[ $3 == "-all" ]]; then
 	  echo "#!/bin/bash" > "$project_dir$1/paths.sh"
