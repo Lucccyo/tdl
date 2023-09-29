@@ -6,6 +6,37 @@ invalid_command() {
   exit 0 
 }
 
+context_already_exists() {
+  echo "tdl: context already exists"
+  echo "Try 'tdl -l' to view existing contexts."
+  exit 0
+}
+
+context_unfound(){
+  echo "tdl: context not found"
+  echo "Try 'tdl -l' to view existing contexts."
+  exit 0
+}
+
+empty_context(){
+  echo "tdl: empty context"
+  echo "Try 'tdl --help' for more information."
+  exit 0
+ 
+}
+
+path_unfound(){
+  echo "tdl: path name not found"
+  echo "Try 'tdl <context> -l' to view existing paths of <context>."
+  exit 0
+}
+
+path_already_exists() {
+  echo "tdl: path name already exists"
+  echo "Try 'tdl <context> -l' to view existing paths of <context>."
+  exit 0
+}
+
 project_dir="$HOME/.config/tdl/"
 
 if [[ "$#" -eq 0 ]]; then 
@@ -15,20 +46,36 @@ if [[ "$1" =~ ^- ]]; then
   if [[ ! (($1 == "-c" || $1 == "-o" || $1 == "-r") && -n $2) && ! $1 == "-l" && ! $1 == "--help" ]]; then
     invalid_command
   elif [[ $1 == '-l' ]]; then
+    # tdl -l
     ls $project_dir | grep -v $project_dir
   elif [[ $1 == "--help" ]]; then
+    # tdl --help
     man tdl
   else 
     case "$1" in
-      '-c' ) 
+      '-c' )
+	# tdl -c <context>
+	if [[ -d "$project_dir$2" ]]; then
+	  context_already_exists
+	fi
 	mkdir "$project_dir$2"
 	touch "$project_dir$2/paths.sh"
 	echo '#!/bin/bash' > "$project_dir$2/paths.sh";;
-      '-o' ) 
+      '-o' )
+	# tdl -o <context>
+	if [[ ! -d "$project_dir$2" ]]; then
+	  context_unfound
+	fi
+	if [[ $(wc -l < "$project_dir$2/paths.sh") -eq 1 ]]; then
+	  empty_context
+	fi
 	setsid sh "$project_dir$2/paths.sh" &
-	kill -9 $(ps -o ppid= -p $$)
-	;;
-      '-r' ) 
+	kill -9 $(ps -o ppid= -p $$) ;;
+      '-r' )
+	# tdl -r <context>
+	if [[ ! -d "$project_dir$2" ]]; then
+	  context_unfound
+	fi
 	rm -rf "$project_dir$2";;
     esac 
   fi
@@ -39,11 +86,12 @@ else
   if [[ ! (($2 == "-a" || $2 == "-g" || $2 == "-r") && -n $3) && ! $2 == "-l" ]]; then
     invalid_command
   elif [[ $2 == '-l' ]]; then
-    # montrer ceux qui sont ghost et ceux qui ne le sont pas 
+    # tdl <context> -l
     grep '^#\s' "$project_dir$1/paths.sh"
   else 
     case "$2" in
-      '-a' ) 
+      '-a' )
+	# tdl <context> -a <path_name> -[f|v|t] <path>
 	if [[ "$#" -lt 5 ]]; then
 	  exit 0
 	else
@@ -56,19 +104,18 @@ else
 	fi
 	;;
       '-g' )
-	# on va chercher le num de ligne en question (aller au nom et +1)
+	# tdl <context> -g <path_name> <path_name>
       	l=$(grep -n "^# $3" "$project_dir$1/paths.sh" | head -c 1)
 	l=$((l+1))
 	line=$(sed -n "${l}p" < "$project_dir$1/paths.sh")
-	# on regarde si cette ligne commence déjà par #
 	if [[ "$line" =~ ^# ]]; then
-	# 	si oui, on le retire
 	  sed -i "${l}s/^.//" "$project_dir$1/paths.sh"
-      	# 	si non, on l'ajoute
 	else
 	  sed -i "${l}s/^/#/" "$project_dir$1/paths.sh"
 	fi;;
       '-r' )
+	# tdl <context> -r -all
+	# tdl <context> -r <path_name>
 	if [[ $3 == "-all" ]]; then
 	  echo "#!/bin/bash" > "$project_dir$1/paths.sh"
 	else
