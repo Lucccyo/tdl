@@ -94,6 +94,8 @@ else
 	# tdl <context> -a <path_name> -[f|v|t] <path>
 	if [[ "$#" -lt 5 ]]; then
 	  exit 0
+	elif [[ $(grep "# $3" < "$project_dir$1/paths.sh" | wc -l) -eq 1 ]]; then
+	  path_already_exists
 	else
 	  echo "# $3" >> "$project_dir$1/paths.sh"
 	  case "$4" in
@@ -105,7 +107,10 @@ else
 	;;
       '-g' )
 	# tdl <context> -g <path_name> <path_name>
-      	l=$(grep -n "^# $3" "$project_dir$1/paths.sh" | head -c 1)
+	if [[ $(grep "# $3" < "$project_dir$1/paths.sh" | wc -l) -eq 0 ]]; then
+	  path_unfound
+      	fi
+	l=$(grep -n "^# $3" "$project_dir$1/paths.sh" | head -c 1)
 	l=$((l+1))
 	line=$(sed -n "${l}p" < "$project_dir$1/paths.sh")
 	if [[ "$line" =~ ^# ]]; then
@@ -118,6 +123,8 @@ else
 	# tdl <context> -r <path_name>
 	if [[ $3 == "-all" ]]; then
 	  echo "#!/bin/bash" > "$project_dir$1/paths.sh"
+	elif [[ $(grep "# $3" < "$project_dir$1/paths.sh" | wc -l) -eq 0 ]]; then
+	  path_unfound
 	else
 	  l=$(grep -n "^# $3" "$project_dir$1/paths.sh" | head -c 1)
 	  if [[ $l -gt 1 ]]; then
