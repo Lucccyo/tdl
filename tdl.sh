@@ -39,14 +39,14 @@ else
   if [[ ! (($2 == "-a" || $2 == "-g" || $2 == "-r") && -n $3) && ! $2 == "-l" ]]; then
     invalid_command
   elif [[ $2 == '-l' ]]; then
-    grep -v '^\s*$\|^#' "$project_dir$1/paths.sh"
+    grep '^#\s' "$project_dir$1/paths.sh"
   else 
     case "$2" in
       '-a' ) 
 	if [[ "$#" -lt 5 ]]; then
 	  exit 0
 	else
-	  echo "#$3" >> "$project_dir$1/paths.sh"
+	  echo "# $3" >> "$project_dir$1/paths.sh"
 	  case "$4" in
   	    '-f' ) echo "firefox -new-window $5 &" >> "$project_dir$1/paths.sh" ;;
   	    '-v' ) echo "alacritty -e nvim $5 &" >> "$project_dir$1/paths.sh" ;;
@@ -54,12 +54,25 @@ else
 	  esac
 	fi
 	;;
-      '-g' ) echo "on ghost les paths ... dans $1" ;;
+      '-g' )
+	# on va chercher le num de ligne en question (aller au nom et +1)
+      	l=$(grep -n "^# $3" "$project_dir$1/paths.sh" | head -c 1)
+	l=$((l+1))
+	line=$(sed -n "${l}p" < "$project_dir$1/paths.sh")
+	# on regarde si cette ligne commence déjà par #
+	if [[ "$line" =~ ^# ]]; then
+	# 	si oui, on le retire
+	  sed -i "${l}s/^.//" "$project_dir$1/paths.sh"
+      	# 	si non, on l'ajoute
+	else
+	  sed -i "${l}s/^/#/" "$project_dir$1/paths.sh"
+	fi
+	echo "on ghost les paths ... dans $1" ;;
       '-r' )
 	if [[ $3 == "-all" ]]; then
 	  echo "#!/bin/bash" > "$project_dir$1/paths.sh"
 	else
-	  l=$(grep -n "^#$3" "$project_dir$1/paths.sh" | head -c 1)
+	  l=$(grep -n "^# $3" "$project_dir$1/paths.sh" | head -c 1)
 	  if [[ $l -gt 1 ]]; then
 	    sed -i "${l}d" "$project_dir$1/paths.sh"
 	    sed -i "${l}d" "$project_dir$1/paths.sh"
