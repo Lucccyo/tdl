@@ -9,4 +9,3 @@ project opener
     tdl -rename <context>
     tdl <context> -rename <nom_path> <nouveau_nom_path>
 - faire la verif des paths donnés
-- faire en sorte que l'on puisse ghoster plusieurs en une ligne

@@ -43,7 +43,7 @@ if [[ "$#" -eq 0 ]]; then
   invalid_command
 fi
 if [[ "$1" =~ ^- ]]; then
-  if [[ ! (($1 == "-c" || $1 == "-o" || $1 == "-r") && -n $2) && ! $1 == "-l" && ! $1 == "--help" ]]; then
+  if [[ ! (($1 == "-c" || $1 == "-o" || $1 == "-d") && -n $2) && ! $1 == "-l" && ! $1 == "--help" ]]; then
     invalid_command
   elif [[ $1 == '-l' ]]; then
     # tdl -l
@@ -71,7 +71,7 @@ if [[ "$1" =~ ^- ]]; then
 	fi
 	setsid sh "$project_dir$2/paths.sh" &
 	kill -9 $(ps -o ppid= -p $$) ;;
-      '-r' )
+      '-d' )
 	# tdl -r <context>
 	if [[ ! -d "$project_dir$2" ]]; then
 	  context_unfound
@@ -83,11 +83,36 @@ else
   if [[ "$#" -eq 1 ]]; then
     exit 0
   fi
-  if [[ ! (($2 == "-a" || $2 == "-g" || $2 == "-r") && -n $3) && ! $2 == "-l" ]]; then
+  if [[ ! (($2 == "-a" || $2 == "-g" || $2 == "-d") && -n $3) && ! $2 == "-l" ]]; then
     invalid_command
   elif [[ $2 == '-l' ]]; then
     # tdl <context> -l
-    grep '^#\s' "$project_dir$1/paths.sh"
+    #grep '^#\s' "$project_dir$1/paths.sh"
+    # pour chaque ligne paire (a partir de 2) 
+    while read -r path_name 
+    do
+      if [[ $path_name =~ ^#! ]]; then
+	continue
+      fi
+      #echo "path name : " $path_name
+      read -r path
+      #echo "path : " $path
+      if [[ $path =~ ^# ]]; then
+	echo $path_name
+      else
+	# sed 's/^.\{2\}//' < $path_name
+	# enlever le '# ' devant pathname
+      fi
+    done < "$project_dir$1/paths.sh"
+
+    # 		on recup le nom
+    # 		on recup le num de ligne
+    # on verifie a la ligne d'apres si elle commence par un #
+    # 		si oui, on print le nom direct
+    # 		si non, on print le nom en elevant le '# ' devant
+
+
+
   else 
     case "$2" in
       '-a' )
@@ -106,32 +131,45 @@ else
 	fi
 	;;
       '-g' )
-	# tdl <context> -g <path_name> <path_name>
-	if [[ $(grep "# $3" < "$project_dir$1/paths.sh" | wc -l) -eq 0 ]]; then
-	  path_unfound
-      	fi
-	l=$(grep -n "^# $3" "$project_dir$1/paths.sh" | head -c 1)
-	l=$((l+1))
-	line=$(sed -n "${l}p" < "$project_dir$1/paths.sh")
-	if [[ "$line" =~ ^# ]]; then
-	  sed -i "${l}s/^.//" "$project_dir$1/paths.sh"
-	else
-	  sed -i "${l}s/^/#/" "$project_dir$1/paths.sh"
-	fi;;
-      '-r' )
+	# tdl <context> -g <path_name> <path_name>...
+	for path in "$@"
+	do
+	  if [[ $path = $1 || $path = $2 ]]; then
+	    continue
+	  fi
+	  if [[ $(grep "# $path" < "$project_dir$1/paths.sh" | wc -l) -eq 0 ]]; then
+	    path_unfound
+	  fi
+	  l=$(grep -n "^# $path" "$project_dir$1/paths.sh" | head -c 1)
+	  l=$((l+1))
+	  line=$(sed -n "${l}p" < "$project_dir$1/paths.sh")
+	  if [[ "$line" =~ ^# ]]; then
+	    sed -i "${l}s/^.//" "$project_dir$1/paths.sh"
+	  else
+	    sed -i "${l}s/^/#/" "$project_dir$1/paths.sh"
+	  fi
+	done;;
+      '-d' )
 	# tdl <context> -r -all
-	# tdl <context> -r <path_name>
+	# tdl <context> -r <path_name> <path_name>...
 	if [[ $3 == "-all" ]]; then
 	  echo "#!/bin/bash" > "$project_dir$1/paths.sh"
-	elif [[ $(grep "# $3" < "$project_dir$1/paths.sh" | wc -l) -eq 0 ]]; then
-	  path_unfound
-	else
-	  l=$(grep -n "^# $3" "$project_dir$1/paths.sh" | head -c 1)
-	  if [[ $l -gt 1 ]]; then
-	    sed -i "${l}d" "$project_dir$1/paths.sh"
-	    sed -i "${l}d" "$project_dir$1/paths.sh"
+	fi
+	for path in "$@"
+	do
+	  if [[ $path = $1 || $path = $2 ]]; then
+	    continue
 	  fi
-	fi ;;
+	  if [[ $(grep "# $path" < "$project_dir$1/paths.sh" | wc -l) -eq 0 ]]; then
+	    path_unfound
+	  else
+	    l=$(grep -n "^# $path" "$project_dir$1/paths.sh" | head -c 1)
+	    if [[ $l -gt 1 ]]; then
+	      sed -i "${l}d" "$project_dir$1/paths.sh"
+	      sed -i "${l}d" "$project_dir$1/paths.sh"
+	    fi
+	  fi
+	done;;
     esac
   fi
 fi
