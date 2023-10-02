@@ -2,12 +2,18 @@
 
 RED='\033[0;31m'
 GREY='\033[0;90m'
+UNDERLINED='\033[4m'
 NC='\033[0m' # no colour
 
 invalid_command() {
   echo -e "tdl: ${RED}missing operand${NC}"
   echo "Try 'tdl --help' for more information." 
   exit 0 
+}
+
+invalid_path(){
+  echo -e "$1: ${RED}path not found, impossible to add it as a terminal path${NC}"
+  exit 0
 }
 
 context_error(){
@@ -22,7 +28,7 @@ context_error(){
 
 path_error() {
   echo -e "tdl: ${RED}$1${NC}"
-  echo "Try 'tdl <context> -l' to view existing paths of <context>."
+  echo -e "Try 'tdl ${UNDERLINED}$2${NC} -l' to view existing paths of ${UNDERLINED}$2${NC}."
   exit 0
 }
 
@@ -61,7 +67,7 @@ if [[ "$1" =~ ^- ]]; then
 	setsid sh "$project_dir$2/paths.sh" &
 	kill -9 $(ps -o ppid= -p $$) ;;
       '-d' )
-	# tdl -r <context>
+	# tdl -d <context>
 	if [[ ! -d "$project_dir$2" ]]; then
 	  context_error "context not found"
 	fi
@@ -94,26 +100,33 @@ else
 	# tdl <context> -a <path_name> -[f|v|t] <path>
 	if [[ "$#" -lt 5 ]]; then
 	  exit 0
-	elif [[ $(grep "# $3" < "$project_dir$1/paths.sh" | wc -l) -eq 1 ]]; then
-	  path_error "path name already exists"
+	elif [[ $(grep "# $3 " < "$project_dir$1/paths.sh" | wc -l) -eq 1 ]]; then
+	  path_error "path name already exists" $1
 	else
+	  if [[ ! -d "$5" && ! $4 == "-f" ]]; then
+	    invalid_path $5
+	  fi
 	  echo "# $3" >> "$project_dir$1/paths.sh"
 	  case "$4" in
   	    '-f' ) echo "firefox -new-window $5 &" >> "$project_dir$1/paths.sh" ;;
   	    '-v' ) echo "alacritty -e nvim $5 &" >> "$project_dir$1/paths.sh" ;;
-  	    '-t' ) echo "alacritty --working-directory $5 &" >> "$project_dir$1/paths.sh" ;;
+  	    '-t' ) 
+	      echo "alacritty --working-directory $5 &" >> "$project_dir$1/paths.sh" ;;
 	  esac
 	fi
 	;;
       '-g' )
 	# tdl <context> -g <path_name> <path_name>...
+	#
+	# CASSÉ
+	#
 	for path in "$@"
 	do
 	  if [[ $path = $1 || $path = $2 ]]; then
 	    continue
 	  fi
 	  if [[ $(grep "# $path" < "$project_dir$1/paths.sh" | wc -l) -eq 0 ]]; then
-	    path_error "path name not found"
+	    path_error "path name not found" $1
 	  fi
 	  l=$(grep -n "^# $path" "$project_dir$1/paths.sh" | head -c 1)
 	  l=$((l+1))
@@ -125,10 +138,11 @@ else
 	  fi
 	done;;
       '-d' )
-	# tdl <context> -r -all
-	# tdl <context> -r <path_name> <path_name>...
+	# tdl <context> -d -all
+	# tdl <context> -d <path_name> <path_name>...
 	if [[ $3 == "-all" ]]; then
 	  echo "#!/bin/bash" > "$project_dir$1/paths.sh"
+	  exit 0
 	fi
 	for path in "$@"
 	do
@@ -136,7 +150,7 @@ else
 	    continue
 	  fi
 	  if [[ $(grep "# $path" < "$project_dir$1/paths.sh" | wc -l) -eq 0 ]]; then
-	    path_error "path name not found"
+	    path_error "path name not found" $1
 	  else
 	    l=$(grep -n "^# $path" "$project_dir$1/paths.sh" | head -c 1)
 	    if [[ $l -gt 1 ]]; then
