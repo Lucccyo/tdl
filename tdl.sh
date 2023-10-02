@@ -1,38 +1,41 @@
 #!/bin/bash 
+RED='\033[0;31m'
+GREY='\033[0;90m'
+NC='\033[0m' # No Color
 
 invalid_command() {
-  echo "tdl: missing operand"
+  echo -e "tdl: ${RED}missing operand${NC}"
   echo "Try 'tdl --help' for more information." 
   exit 0 
 }
 
 context_already_exists() {
-  echo "tdl: context already exists"
+  echo -e "tdl: ${RED}context already exists${NC}"
   echo "Try 'tdl -l' to view existing contexts."
   exit 0
 }
 
 context_unfound(){
-  echo "tdl: context not found"
+  echo -e "tdl: ${RED}context not found${NC}"
   echo "Try 'tdl -l' to view existing contexts."
   exit 0
 }
 
 empty_context(){
-  echo "tdl: empty context"
+  echo -e "tdl: ${RED}empty context${NC}"
   echo "Try 'tdl --help' for more information."
   exit 0
  
 }
 
 path_unfound(){
-  echo "tdl: path name not found"
+  echo -e "tdl: ${RED}path name not found${NC}"
   echo "Try 'tdl <context> -l' to view existing paths of <context>."
   exit 0
 }
 
 path_already_exists() {
-  echo "tdl: path name already exists"
+  echo -e "tdl: ${RED}path name already exists${NC}"
   echo "Try 'tdl <context> -l' to view existing paths of <context>."
   exit 0
 }
@@ -94,7 +97,7 @@ else
       fi
       read -r path
       if [[ $path =~ ^# ]]; then
-	echo $path_name
+	echo -e "${GREY}$path_name${NC}"
       else
 	echo $path_name | sed 's/^.\{2\}//'
       fi
