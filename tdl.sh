@@ -117,9 +117,6 @@ else
 	;;
       '-g' )
 	# tdl <context> -g <path_name> <path_name>...
-	#
-	# CASSÉ
-	#
 	for path in "$@"
 	do
 	  if [[ $path = $1 || $path = $2 ]]; then
