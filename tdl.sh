@@ -128,7 +128,7 @@ else
 	  if [[ $(grep "# $path" < "$project_dir$1/paths.sh" | wc -l) -eq 0 ]]; then
 	    path_error "path name not found" $1
 	  fi
-	  l=$(grep -n "^# $path" "$project_dir$1/paths.sh" | head -c 1)
+	  l=$(grep -n "^# $path$" "$project_dir$1/paths.sh" | head -c 1)
 	  l=$((l+1))
 	  line=$(sed -n "${l}p" < "$project_dir$1/paths.sh")
 	  if [[ "$line" =~ ^# ]]; then
