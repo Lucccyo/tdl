@@ -1,7 +1,8 @@
-#!/bin/bash 
+#!/bin/bash
+
 RED='\033[0;31m'
 GREY='\033[0;90m'
-NC='\033[0m' # No Color
+NC='\033[0m' # no colour
 
 invalid_command() {
   echo -e "tdl: ${RED}missing operand${NC}"
@@ -9,33 +10,18 @@ invalid_command() {
   exit 0 
 }
 
-context_already_exists() {
-  echo -e "tdl: ${RED}context already exists${NC}"
-  echo "Try 'tdl -l' to view existing contexts."
+context_error(){
+  echo -e "tdl: ${RED}$1${NC}"
+  if [ $# -eq 1 ]; then
+    echo "Try 'tdl -l' to view existing contexts."
+  else
+    echo "Try 'tdl --help' for more information."
+  fi
   exit 0
 }
 
-context_unfound(){
-  echo -e "tdl: ${RED}context not found${NC}"
-  echo "Try 'tdl -l' to view existing contexts."
-  exit 0
-}
-
-empty_context(){
-  echo -e "tdl: ${RED}empty context${NC}"
-  echo "Try 'tdl --help' for more information."
-  exit 0
- 
-}
-
-path_unfound(){
-  echo -e "tdl: ${RED}path name not found${NC}"
-  echo "Try 'tdl <context> -l' to view existing paths of <context>."
-  exit 0
-}
-
-path_already_exists() {
-  echo -e "tdl: ${RED}path name already exists${NC}"
+path_error() {
+  echo -e "tdl: ${RED}$1${NC}"
   echo "Try 'tdl <context> -l' to view existing paths of <context>."
   exit 0
 }
@@ -59,7 +45,7 @@ if [[ "$1" =~ ^- ]]; then
       '-c' )
 	# tdl -c <context>
 	if [[ -d "$project_dir$2" ]]; then
-	  context_already_exists
+	  context_error "context already exists"
 	fi
 	mkdir "$project_dir$2"
 	touch "$project_dir$2/paths.sh"
@@ -67,17 +53,17 @@ if [[ "$1" =~ ^- ]]; then
       '-o' )
 	# tdl -o <context>
 	if [[ ! -d "$project_dir$2" ]]; then
-	  context_unfound
+	  context_error "context not found"
 	fi
 	if [[ $(wc -l < "$project_dir$2/paths.sh") -eq 1 ]]; then
-	  empty_context
+	  context_error "empty context" ""
 	fi
 	setsid sh "$project_dir$2/paths.sh" &
 	kill -9 $(ps -o ppid= -p $$) ;;
       '-d' )
 	# tdl -r <context>
 	if [[ ! -d "$project_dir$2" ]]; then
-	  context_unfound
+	  context_error "context not found"
 	fi
 	rm -rf "$project_dir$2";;
     esac 
@@ -109,7 +95,7 @@ else
 	if [[ "$#" -lt 5 ]]; then
 	  exit 0
 	elif [[ $(grep "# $3" < "$project_dir$1/paths.sh" | wc -l) -eq 1 ]]; then
-	  path_already_exists
+	  path_error "path name already exists"
 	else
 	  echo "# $3" >> "$project_dir$1/paths.sh"
 	  case "$4" in
@@ -127,7 +113,7 @@ else
 	    continue
 	  fi
 	  if [[ $(grep "# $path" < "$project_dir$1/paths.sh" | wc -l) -eq 0 ]]; then
-	    path_unfound
+	    path_error "path name not found"
 	  fi
 	  l=$(grep -n "^# $path" "$project_dir$1/paths.sh" | head -c 1)
 	  l=$((l+1))
@@ -150,7 +136,7 @@ else
 	    continue
 	  fi
 	  if [[ $(grep "# $path" < "$project_dir$1/paths.sh" | wc -l) -eq 0 ]]; then
-	    path_unfound
+	    path_error "path name not found"
 	  else
 	    l=$(grep -n "^# $path" "$project_dir$1/paths.sh" | head -c 1)
 	    if [[ $l -gt 1 ]]; then
