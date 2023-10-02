@@ -2,7 +2,6 @@
 project opener
 
 - possibilite de ne pas quitter le term courant
-- quand on affiche avec tdl test -l, afficher les # seulement pour les trucs ghostés
 - ajouter le replace 
     tdl <context> -r <nom_path> <nouveau_path>
 - ajouter le rename

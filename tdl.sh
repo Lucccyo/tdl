@@ -87,32 +87,18 @@ else
     invalid_command
   elif [[ $2 == '-l' ]]; then
     # tdl <context> -l
-    #grep '^#\s' "$project_dir$1/paths.sh"
-    # pour chaque ligne paire (a partir de 2) 
     while read -r path_name 
     do
       if [[ $path_name =~ ^#! ]]; then
 	continue
       fi
-      #echo "path name : " $path_name
       read -r path
-      #echo "path : " $path
       if [[ $path =~ ^# ]]; then
 	echo $path_name
       else
-	# sed 's/^.\{2\}//' < $path_name
-	# enlever le '# ' devant pathname
+	echo $path_name | sed 's/^.\{2\}//'
       fi
     done < "$project_dir$1/paths.sh"
-
-    # 		on recup le nom
-    # 		on recup le num de ligne
-    # on verifie a la ligne d'apres si elle commence par un #
-    # 		si oui, on print le nom direct
-    # 		si non, on print le nom en elevant le '# ' devant
-
-
-
   else 
     case "$2" in
       '-a' )
