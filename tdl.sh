@@ -38,7 +38,7 @@ if [[ "$#" -eq 0 ]]; then
   invalid_command
 fi
 if [[ "$1" =~ ^- ]]; then
-  if [[ ! (($1 == "-c" || $1 == "-o" || $1 == "-d") && -n $2) && ! $1 == "-l" && ! $1 == "--help" ]]; then
+  if [[ ! (($1 == "-c" || $1 == "-o" || $1 == "-d" || $1 == "-rename" ) && -n $2) && ! $1 == "-l" && ! $1 == "--help" ]]; then
     invalid_command
   elif [[ $1 == '-l' ]]; then
     # tdl -l
@@ -51,7 +51,7 @@ if [[ "$1" =~ ^- ]]; then
       '-c' )
 	# tdl -c <context>
 	if [[ -d "$project_dir$2" ]]; then
-	  context_error "context already exists"
+	  context_error "context $2 already exists"
 	fi
 	mkdir "$project_dir$2"
 	touch "$project_dir$2/paths.sh"
@@ -59,19 +59,28 @@ if [[ "$1" =~ ^- ]]; then
       '-o' )
 	# tdl -o <context>
 	if [[ ! -d "$project_dir$2" ]]; then
-	  context_error "context not found"
+	  context_error "context $2 not found"
 	fi
 	if [[ $(wc -l < "$project_dir$2/paths.sh") -eq 1 ]]; then
-	  context_error "empty context" ""
+	  context_error "$2: empty context" ""
 	fi
 	setsid sh "$project_dir$2/paths.sh" &
 	kill -9 $(ps -o ppid= -p $$) ;;
       '-d' )
 	# tdl -d <context>
 	if [[ ! -d "$project_dir$2" ]]; then
-	  context_error "context not found"
+	  context_error "context $2 not found"
 	fi
 	rm -rf "$project_dir$2";;
+      '-rename' )
+	if [[ "$#" -lt 3 ]]; then
+	  invalid_command
+	elif [[ -d "$project_dir$3" ]]; then
+	  context_error "context $3 already exists"
+	elif [[ ! -d "$project_dir$2" ]]; then
+	  context_error "context $2 not found"
+	fi
+	  mv "$project_dir$2 $project_dir$3";; 
     esac 
   fi
 else 
@@ -171,7 +180,7 @@ else
 	  old_path_index=$((n-2))
 	  # delimiters!
 	sed -i "${l}s!\(\([^ ]* \)\{${old_path_index}\}\)[^ ]*!\1$4!" "$project_dir$1/paths.sh"
-	fi
+	fi;;
     esac
   fi
 fi
