@@ -73,6 +73,7 @@ if [[ "$1" =~ ^- ]]; then
 	fi
 	rm -rf "$project_dir$2";;
       '-rename' )
+	# tdl -rename <context> <new_context_name>
 	if [[ "$#" -lt 3 ]]; then
 	  invalid_command
 	elif [[ -d "$project_dir$3" ]]; then
@@ -87,7 +88,7 @@ else
   if [[ "$#" -eq 1 ]]; then
     exit 0
   fi
-  if [[ ! (($2 == "-a" || $2 == "-g" || $2 == "-d" || $2 == "-r" ) && -n $3) && ! $2 == "-l" ]]; then
+  if [[ ! (($2 == "-a" || $2 == "-g" || $2 == "-d" || $2 == "-r" || $2 == "-rename" ) && -n $3) && ! $2 == "-l" ]]; then
     invalid_command
   elif [[ $2 == '-l' ]]; then
     # tdl <context> -l
@@ -111,7 +112,7 @@ else
 	  invalid_command
 	fi
 	if [[ $(grep -n "^# $3$" "$project_dir$1/paths.sh" | wc -l) -gt 0 ]]; then
-	  path_error "path name already exists" $1
+	  path_error "path name '$3' already exists" $1
 	else
 	  if [[ ! -d "$5" && ! $4 == "-f" ]]; then
 	    invalid_path $5
@@ -132,8 +133,8 @@ else
 	  if [[ $path = $1 || $path = $2 ]]; then
 	    continue
 	  fi
-	  if [[ $(grep "# $path" < "$project_dir$1/paths.sh" | wc -l) -eq 0 ]]; then
-	    path_error "path name not found" $1
+	  if [[ $(grep -n "^# $path$" < "$project_dir$1/paths.sh" | wc -l) -eq 0 ]]; then
+	    path_error "path name '$path' not found" $1
 	  fi
 	  l=$(grep -n "^# $path$" "$project_dir$1/paths.sh" | head -c 1)
 	  l=$((l+1))
@@ -156,8 +157,8 @@ else
 	  if [[ $path = $1 || $path = $2 ]]; then
 	    continue
 	  fi
-	  if [[ $(grep "# $path" < "$project_dir$1/paths.sh" | wc -l) -eq 0 ]]; then
-	    path_error "path name not found" $1
+	  if [[ $(grep -n "^# $path$" < "$project_dir$1/paths.sh" | wc -l) -eq 0 ]]; then
+	    path_error "path name '$path' not found" $1
 	  else
 	    l=$(grep -n "^# $path" "$project_dir$1/paths.sh" | head -c 1)
 	    if [[ $l -gt 1 ]]; then
@@ -171,15 +172,28 @@ else
 	if [[ "$#" -lt 4 ]]; then
 	  invalid_command
 	fi
-	if [[ $(grep "# $3" < "$project_dir$1/paths.sh" | wc -l) -eq 0 ]]; then
-	  path_error "path name not found" $1
+	if [[ $(grep -n "^# $3$" "$project_dir$1/paths.sh" | wc -l) -eq 0 ]]; then
+	  path_error "path name '$3' not found" $1
 	else
 	  l=$(grep -n "^# $3" "$project_dir$1/paths.sh" | head -c 1)
 	  l=$((l+1))
 	  n=$(sed -n "$l"p "$project_dir$1/paths.sh" | wc -w)
 	  old_path_index=$((n-2))
 	  # delimiters!
-	sed -i "${l}s!\(\([^ ]* \)\{${old_path_index}\}\)[^ ]*!\1$4!" "$project_dir$1/paths.sh"
+	  sed -i "${l}s!\(\([^ ]* \)\{${old_path_index}\}\)[^ ]*!\1$4!" "$project_dir$1/paths.sh"
+	fi;;
+      '-rename' )
+	# tdl <context> -rename <nom_path> <nouveau_nom_path>
+	if [[ "$#" -lt 4 ]]; then
+	  invalid_command
+	fi
+	if [[ $(grep -n "^# $3$" "$project_dir$1/paths.sh" | wc -l) -eq 0 ]]; then
+	  path_error "path name '$3' not found" $1
+	elif [[ $(grep -n "^# $4$" "$project_dir$1/paths.sh" | wc -l) -gt 0 ]]; then
+	  path_error "path name '$4' already exists" $1
+	else
+	  l=$(grep -n "^# $3$" "$project_dir$1/paths.sh" | head -c 1)
+	  sed -i "${l}s/\(\([^ ]* \)\{1\}\)[^ ]*/\1$4/" "$project_dir$1/paths.sh"
 	fi;;
     esac
   fi
