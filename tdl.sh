@@ -193,8 +193,18 @@ else
 	too_few_arguments "arguments" $2
       fi
       if [[ $3 == "-all" ]]; then
-	# TODO
-	echo "todo"
+	l=3
+	sed -n "1~2p" "$project_dir$context/paths.sh" | while read -r line ; do
+	  if [[ $line =~ "#!/bin" ]]; then 
+	    continue
+	  fi
+	  if [[ "$line" =~ ^# ]]; then
+	    sed -i "${l}s/^.//" "$project_dir$context/paths.sh"
+	  else
+	    sed -i "${l}s/^/#/" "$project_dir$context/paths.sh"
+	  fi
+	  l=$(( l+2 ))
+	done
 	exit 0
       fi
       shift; shift
